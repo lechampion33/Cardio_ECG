@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ECG Processing Results</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+
+        body {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: #e9e9e9;
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        h1, h3 {
+            font-weight: 600;
+            text-align: center;
+            color: #ffffff;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .card img {
+            width: 100%;
+            height: auto;
+            object-fit: contain;
+            max-height: 250px;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .prediction {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #4ade80;
+            text-align: center;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            display: inline-block;
+            background: #4ade80;
+            color: #ffffff;
+            padding: 10px 20px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: none;
+            font-size: 1rem;
+            margin: 10px;
+        }
+
+        .btn:hover {
+            background: #22c55e;
+            transform: translateY(-2px);
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            color: #ffffff;
+            opacity: 0.7;
+        }
+
+        .fade-in {
+            animation: fadeIn 1s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            color: #4ade80;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        #viewProcessBtn {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="fade-in"><i class="fas fa-heartbeat icon"></i><br>ECG Processing Results</h1>
+
+        <div class="card fade-in">
+            <h3>Uploaded Image</h3>
+            <img src="{{ url_for('static', filename='processed/uploaded_image.png') }}" alt="Uploaded Image">
+        </div>
+
+        <div class="prediction fade-in">
+            <i class="fas fa-clipboard-check icon"></i>
+            <h3>Prediction Result</h3>
+            <p>{{ result }}</p>
+        </div>
+
+        <div class="text-center fade-in">
+            <button id="viewProcessBtn" class="btn">View the Process</button>
+            <a href="{{ url_for('upload') }}" class="btn">Analyze Another ECG</a>
+        </div>
+
+        <div id="processCards" class="hidden">
+            <div class="card fade-in">
+                <h3>Grayscale Image</h3>
+                <img src="{{ url_for('static', filename='processed/gray_image.png') }}" alt="Grayscale Image">
+            </div>
+
+            <div class="card fade-in">
+                <h3>Leads 1-12</h3>
+                <img src="{{ url_for('static', filename='processed/Leads_1-12_figure.png') }}" alt="Leads 1-12">
+            </div>
+
+            <div class="card fade-in">
+                <h3>Long Lead 13</h3>
+                <img src="{{ url_for('static', filename='processed/Long_Lead_13_figure.png') }}" alt="Long Lead 13">
+            </div>
+
+            <div class="card fade-in">
+                <h3>Preprocessed Leads 1-12</h3>
+                <img src="{{ url_for('static', filename='processed/Preprocessed_Leads_1-12_figure.png') }}" alt="Preprocessed Leads 1-12">
+            </div>
+
+            <div class="card fade-in">
+                <h3>Preprocessed Long Lead 13</h3>
+                <img src="{{ url_for('static', filename='processed/Preprocessed_Leads_13_figure.png') }}" alt="Preprocessed Long Lead 13">
+            </div>
+
+            <div class="card fade-in">
+                <h3>Contour Leads</h3>
+                <img src="{{ url_for('static', filename='processed/Contour_Leads_1-12_figure.png') }}" alt="Contour Leads">
+            </div>
+
+            <div class="card fade-in">
+                <h3>ECG 1D Signal Data</h3>
+                <div class="table-responsive">
+                    {{ ecg_1d_signal | safe }}
+                </div>
+            </div>
+
+            <div class="card fade-in">
+                <h3>Dimensionality Reduced Data</h3>
+                <div class="table-responsive">
+                    {{ reduced_data | safe }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2024 ECG Analysis Platform </p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const viewProcessBtn = document.getElementById('viewProcessBtn');
+            const processCards = document.getElementById('processCards');
+
+            viewProcessBtn.addEventListener('click', function() {
+                if (processCards.classList.contains('hidden')) {
+                    processCards.classList.remove('hidden');
+                    viewProcessBtn.textContent = 'Hide Process';
+                } else {
+                    processCards.classList.add('hidden');
+                    viewProcessBtn.textContent = 'View the Process';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
