@@ -1,34 +1,62 @@
 from flask import Flask, render_template, request, redirect, url_for
-from werkzeug.utils import secure_filename
-from ecg import ECG
+from keras.models import load_model
+import numpy as np
+import cv2
+from skimage.io import imread
+from skimage.color import rgb2gray
+from skimage.filters import gaussian, threshold_otsu
+from skimage.transform import resize
 import os
-import matplotlib.pyplot as plt 
 
+# Initialize Flask app
 app = Flask(__name__)
-app.config['UPLOAD_FOLDER'] = 'static/uploads'
-app.config['PROCESSED_FOLDER'] = 'static/processed'
 
-# Initialize ECG object
-ecg = ECG()
+# Load your trained model
+model = load_model('ecg_cnn_model.h5')
 
-def save_image(filename, folder, image):
-    """Utility to save images."""
-    filepath = os.path.join(folder, filename)
-    plt.imsave(filepath, image, cmap='gray')
-    return filepath
+# Define the prediction function
+def preprocess_custom_image(image_path):
+    # Load and preprocess EXACTLY like training data
+    image = imread(image_path)
+    
+    # Convert to grayscale
+    if len(image.shape) == 3:  # Color image
+        gray_image = rgb2gray(image)
+    else:  # Already grayscale
+        gray_image = image
+    
+    # Apply preprocessing pipeline (same as during training)
+    blurred_image = gaussian(gray_image, sigma=0.7)
+    otsu_threshold = threshold_otsu(blurred_image)
+    binary_image = blurred_image < otsu_threshold  # Important: Same thresholding direction!
+    resized_image = resize(binary_image, (128, 128))
+    
+    # Add channel dimension and batch dimension
+    processed_image = resized_image.reshape(1, 128, 128, 1)  # (batch, height, width, channels)
+    return processed_image
+
+def predict_ecg(img_path):
+    # Preprocess the image for prediction
+    processed_image = preprocess_custom_image(img_path)
+    
+    # Predict the class
+    predictions = model.predict(processed_image)
+    predicted_class = np.argmax(predictions, axis=1)[0]
+
+    if predicted_class == 0:
+        return "Your ECG corresponds to Abnormal Heartbeat."
+    elif predicted_class == 1:
+        return "Your ECG corresponds to History of Myocardial Infarction."
+    elif predicted_class == 2:
+        return "Your ECG corresponds to Myocardial Infarction."
+    elif predicted_class == 3:
+        return "Your ECG corresponds to Normal."
+    else:
+        return "Unknown prediction."
+
 @app.route('/', methods=['GET'])
 def index():
     return render_template('index.html')
-@app.route('/upload', methods=['GET', 'POST'])
-def upload():
-    if request.method == 'POST':
-        file = request.files['ecg_image']  # Note: Name matches the `name="ecg_image"` in the HTML
-        if file:
-            filename = secure_filename(file.filename)
-            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            file.save(filepath)
-            return redirect(url_for('process_ecg', filename=filename))
-    return render_template('upload.html')
 
 @app.route('/cardioinsight')
 def cardioinsight():
@@ -38,54 +66,25 @@ def cardioinsight():
 def contact():
     return render_template('contact.html')
 
-@app.route('/process/<filename>', methods=['GET'])
-def process_ecg(filename):
-    # Load the uploaded image
-    filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-    uploaded_image = ecg.getImage(filepath)
+@app.route('/upload', methods=['GET', 'POST'])
+def upload():
+    if request.method == 'POST':
+        # Handle file upload
+        uploaded_file = request.files['ecg_image']
+        if uploaded_file.filename != '':
+            img_path = f'./static/{uploaded_file.filename}'
+            uploaded_file.save(img_path)
 
-    # Save and display the uploaded image
-    uploaded_image_path = save_image('uploaded_image.png', app.config['PROCESSED_FOLDER'], uploaded_image)
+            # Predict the class of the ECG image
+            result = predict_ecg(img_path)
+            return redirect(url_for('result', prediction=result))
 
-    # Grayscale conversion
-    gray_image = ecg.GrayImage(uploaded_image)
-    gray_image_path = save_image('gray_image.png', app.config['PROCESSED_FOLDER'], gray_image)
+    return render_template('upload.html')
 
-    # Divide leads
-    leads = ecg.DividingLeads(uploaded_image)
-    leads_image_path = os.path.join(app.config['PROCESSED_FOLDER'], 'Leads_1-12_figure.png')
-    long_lead_image_path = os.path.join(app.config['PROCESSED_FOLDER'], 'Long_Lead_13_figure.png')
-
-    # Preprocessed leads
-    ecg.PreprocessingLeads(leads)
-    preprocessed_leads_path = os.path.join(app.config['PROCESSED_FOLDER'], 'Preprossed_Leads_1-12_figure.png')
-    preprocessed_long_lead_path = os.path.join(app.config['PROCESSED_FOLDER'], 'Preprossed_Leads_13_figure.png')
-
-    # Contour leads
-    ecg.SignalExtraction_Scaling(leads)
-    contour_leads_path = os.path.join(app.config['PROCESSED_FOLDER'], 'Contour_Leads_1-12_figure.png')
-
-    # Combine and perform dimensionality reduction and classification
-    combined_csv = ecg.CombineConvert1Dsignal()
-    reduced_df = ecg.DimensionalReduction(combined_csv)
-    result = ecg.ModelLoad_predict(reduced_df)
-    # Prepare data for frontend
-    ecg_1d_signal = combined_csv.head(10).to_html(classes='table table-bordered', index=False)
-    reduced_data = reduced_df.head(10).to_html(classes='table table-bordered', index=False)
-
-    return render_template(
-        'process.html',
-        uploaded_image_path=uploaded_image_path,
-        gray_image_path=gray_image_path,
-        leads_image_path=leads_image_path,
-        long_lead_image_path=long_lead_image_path,
-        preprocessed_leads_path=preprocessed_leads_path,
-        preprocessed_long_lead_path=preprocessed_long_lead_path,
-        contour_leads_path=contour_leads_path,
-        result=result, 
-        ecg_1d_signal=ecg_1d_signal, 
-        reduced_data=reduced_data
-    )
+@app.route('/result')
+def result():
+    prediction = request.args.get('prediction')
+    return render_template('result.html', result=prediction)
 
 if __name__ == '__main__':
     app.run(debug=True)

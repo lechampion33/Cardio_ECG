@@ -1,122 +1,49 @@
-from skimage.io import imread
-from skimage import color
-import matplotlib.pyplot as plt
-from skimage.filters import threshold_otsu, gaussian
-from skimage.transform import resize
-from numpy import asarray
-from skimage.metrics import structural_similarity
-from skimage import measure
-from sklearn.decomposition import PCA
-from sklearn.preprocessing import MinMaxScaler
-import pandas as pd
+from flask import Flask, render_template, request
+from keras.models import load_model
+from keras.preprocessing import image
 import numpy as np
-import os
-from natsort import natsorted
-import joblib
 
-class ECG:
-    def __init__(self):
-        self.upload_folder = 'static/uploads'  # Folder to save uploaded images
-        self.processed_folder = 'static/processed'  # Folder to save processed images
-        self.scaled_files_folder = 'static/scaled_files'  # Folder to save scaled CSV files
-        
-        for folder in [self.processed_folder, self.scaled_files_folder]:
-            if not os.path.exists(folder):
-                os.makedirs(folder)
+# Initialize Flask app
+app = Flask(__name__)
 
-    def getImage(self, image):
-        return imread(image)
+# Load your trained model
+model = load_model('ecg_cnn_model.h5')
 
-    def GrayImage(self, image):
-        image_gray = color.rgb2gray(image)
-        image_gray = resize(image_gray, (1572, 2213))
-        return image_gray
+# Define the prediction function
+def predict_ecg(img_path):
+    img = image.load_img(img_path, target_size=(224, 224))  # Adjust target size if needed
+    img_array = image.img_to_array(img)
+    img_array = np.expand_dims(img_array, axis=0)  # Adding batch dimension
+    img_array /= 255.0  # Normalization (if needed based on your model)
 
-    def DividingLeads(self, image):
-        Leads = [
-            image[300:600, 150:643],   # Lead 1
-            image[300:600, 646:1135],  # Lead aVR
-            image[300:600, 1140:1625], # Lead V1
-            image[300:600, 1630:2125], # Lead V4
-            image[600:900, 150:643],   # Lead 2
-            image[600:900, 646:1135],  # Lead aVL
-            image[600:900, 1140:1625], # Lead V2
-            image[600:900, 1630:2125], # Lead V5
-            image[900:1200, 150:643],  # Lead 3
-            image[900:1200, 646:1135], # Lead aVF
-            image[900:1200, 1140:1625],# Lead V3
-            image[900:1200, 1630:2125],# Lead V6
-            image[1250:1480, 150:2125] # Long Lead
-        ]
-        
-        return Leads
+    predictions = model.predict(img_array)
+    predicted_class = np.argmax(predictions, axis=1)[0]
 
-    def PreprocessingLeads(self, Leads):
-        preprocessed_leads = []
+    if predicted_class == 0:
+        return "Your ECG corresponds to Abnormal Heartbeat."
+    elif predicted_class == 1:
+        return "Your ECG corresponds to Myocardial Infarction."
+    elif predicted_class == 2:
+        return "Your ECG is Normal."
+    elif predicted_class == 3:
+        return "Your ECG corresponds to History of Myocardial Infarction."
+    else:
+        return "Unknown prediction."
 
-        for lead in Leads:
-            grayscale = color.rgb2gray(lead)
-            blurred_image = gaussian(grayscale, sigma=1)
-            global_thresh = threshold_otsu(blurred_image)
-            binary_global = blurred_image < global_thresh
-            binary_global = resize(binary_global, (300, 450))
-            preprocessed_leads.append(binary_global)
+@app.route('/', methods=['GET', 'POST'])
+def index():
+    if request.method == 'POST':
+        # Handle file upload
+        uploaded_file = request.files['ecg_image']
+        if uploaded_file.filename != '':
+            img_path = f'./static/{uploaded_file.filename}'
+            uploaded_file.save(img_path)
 
-        return preprocessed_leads
+            # Predict the class of the ECG image
+            result = predict_ecg(img_path)
+            return render_template('index.html', result=result)
 
-    def SignalExtraction_Scaling(self, Leads):
-        # Clear any existing scaled files
-        for file in os.listdir(self.scaled_files_folder):
-            os.remove(os.path.join(self.scaled_files_folder, file))
+    return render_template('index.html', result=None)
 
-        for idx, lead in enumerate(Leads[:-1]):
-            grayscale = color.rgb2gray(lead)
-            blurred_image = gaussian(grayscale, sigma=0.7)
-            global_thresh = threshold_otsu(blurred_image)
-            binary_global = blurred_image < global_thresh
-            binary_global = resize(binary_global, (300, 450))
-            
-            contours = measure.find_contours(binary_global, 0.8)
-            largest_contour = max(contours, key=lambda x: x.shape[0])
-            resized_contour = resize(largest_contour, (255, 2))
-
-            # Scale the data
-            scaler = MinMaxScaler()
-            scaled_data = scaler.fit_transform(resized_contour)
-
-            # Save scaled data to a CSV file
-            scaled_file_name = os.path.join(self.scaled_files_folder, f"Scaled_1DLead_{idx + 1}.csv")
-            pd.DataFrame(scaled_data[:, 0], columns=['X']).T.to_csv(scaled_file_name, index=False)
-
-    def CombineConvert1Dsignal(self):
-        all_data = []
-
-        for file in natsorted(os.listdir(self.scaled_files_folder)):
-            if file.endswith('.csv'):
-                data = pd.read_csv(os.path.join(self.scaled_files_folder, file))
-                all_data.append(data)
-
-        return pd.concat(all_data, axis=1, ignore_index=True)
-
-    def DimensionalReduction(self, test_final):
-        pca_loaded_model = joblib.load('PCA_ECG.pkl')
-        reduced_data = pca_loaded_model.transform(test_final)
-        return pd.DataFrame(reduced_data)
-
-    def ModelLoad_predict(self, final_df):
-        loaded_model = joblib.load('Heart_Disease_Prediction_using_ECG.pkl')
-        result = loaded_model.predict(final_df)
-
-        if result[0] == 1:
-            return "Your ECG corresponds to Myocardial Infarction."
-        elif result[0] == 0:
-            return "Your ECG corresponds to Abnormal Heartbeat."
-        elif result[0] == 2:
-            return "Your ECG is Normal."
-        else:
-            return "Your ECG corresponds to History of Myocardial Infarction."
-
-# Changes to Frontend
-# 1. Ensure the backend call resets the state on the server before uploading a new image.
-# 2. Add an endpoint to clear intermediate files if needed.
-# 3. Test the updated backend thoroughly to ensure it handles multiple uploads consistently.
+if __name__ == '__main__':
+    app.run(debug=True)
