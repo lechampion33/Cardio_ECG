@@ -30,6 +30,13 @@ def upload():
             return redirect(url_for('process_ecg', filename=filename))
     return render_template('upload.html')
 
+@app.route('/cardioinsight')
+def cardioinsight():
+    return render_template('cardioinsight.html')
+
+@app.route('/contact')
+def contact():
+    return render_template('contact.html')
 
 @app.route('/process/<filename>', methods=['GET'])
 def process_ecg(filename):

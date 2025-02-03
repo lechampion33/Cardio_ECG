@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cardio Insight</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        body::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('/static/assets/img/gradient_abd_blue.jpg');
+            background-size: cover;
+            background-position: center;
+            transform: rotate(180deg);
+            z-index: -1;
+            /* Moves background behind content */
+        }
+
+
+        .navbar {
+            background-color: rgba(255, 255, 255, 0.95);
+            width: 100%;
+            padding: 20px 0;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .navbar ul {
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+        }
+
+        .navbar li {
+            margin: 0 15px;
+        }
+
+        .navbar a {
+            text-decoration: none;
+            color: #4a3f8f;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: color 0.3s ease;
+        }
+
+        .navbar a:hover {
+            color: #5a67d8;
+        }
+
+        .container {
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 600px;
+            width: 90%;
+            margin: 40px 0;
+        }
+
+        h1 {
+            color: #ffffff;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .subtitle {
+            color: #ffffff;
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        h2 {
+            color: #ffffff;
+            font-size: 1.5rem;
+            margin-top: 32px;
+            margin-bottom: 16px;
+            font-weight: 600;
+        }
+
+        .condition-buttons {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 10px;
+        }
+
+        .btn {
+            display: inline-block;
+            background-color: #ffffff;
+            color: #000000;
+            font-size: 1rem;
+            font-weight: bold;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 50px;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background-color: #4c51bf;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+
+        .modal-content {
+            background-color: #ff9494;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 600px;
+            border-radius: 10px;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar">
+        <ul>
+            <li><a href="/">Home</a></li>
+            <li><a href="/services">Services</a></li>
+            <li><a href="/contact">Contact</a></li>
+        </ul>
+    </nav>
+    <div class="container">
+        <h1>Welcome to Cardio Insight</h1>
+        <p class="subtitle">Your one-stop heart info</p>
+
+        <h2>Arrhythmia</h2>
+        <div class="condition-buttons">
+            <button class="btn" onclick="openModal('arrhythmia-info')">Info</button>
+            <button class="btn" onclick="openModal('arrhythmia-medication')">Medication</button>
+            <button class="btn" onclick="openModal('arrhythmia-food')">Food Habits</button>
+        </div>
+
+        <h2>Myocardial Infarction</h2>
+        <div class="condition-buttons">
+            <button class="btn" onclick="openModal('mi-info')">Info</button>
+            <button class="btn" onclick="openModal('mi-medication')">Medication</button>
+            <button class="btn" onclick="openModal('mi-food')">Food Habits</button>
+        </div>
+
+        <h2>History of Myocardial Infarction</h2>
+        <div class="condition-buttons">
+            <button class="btn" onclick="openModal('hmi-info')">Info</button>
+            <button class="btn" onclick="openModal('hmi-medication')">Medication</button>
+            <button class="btn" onclick="openModal('hmi-food')">Food Habits</button>
+        </div>
+    </div>
+
+    <div id="myModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2 id="modal-title"></h2>
+            <p id="modal-content"></p>
+        </div>
+    </div>
+
+    <script>
+        const modal = document.getElementById("myModal");
+        const span = document.getElementsByClassName("close")[0];
+        const modalTitle = document.getElementById("modal-title");
+        const modalContent = document.getElementById("modal-content");
+
+        const contentMap = {
+            "arrhythmia-info": {
+                title: "Arrhythmia Information",
+                content: "Arrhythmia is an irregular heartbeat. It means your heart is out of its usual rhythm. It may feel like your heart skipped a beat, added a beat, or is 'fluttering'. It might feel like it's beating too fast or too slow."
+            },
+            "arrhythmia-medication": {
+                title: "Medication for Arrhythmia",
+                content: "Common medications for arrhythmia include antiarrhythmic drugs like amiodarone, beta-blockers like metoprolol, and calcium channel blockers like verapamil. The specific medication depends on the type and severity of the arrhythmia."
+            },
+            "arrhythmia-food": {
+                title: "Food Habits for Arrhythmia",
+                content: "Eat a heart-healthy diet, including foods rich in omega-3 fatty acids (like salmon), fruits, vegetables, and whole grains. Limit caffeine and alcohol intake. Avoid excessive salt consumption."
+            },
+            "mi-info": {
+                title: "Myocardial Infarction Information",
+                content: "Myocardial infarction, commonly known as a heart attack, occurs when blood flow to the heart is blocked. The blockage is most often a buildup of fat, cholesterol and other substances, which form a plaque in the arteries that feed the heart."
+            },
+            "mi-medication": {
+                title: "Medication for Myocardial Infarction",
+                content: "Common medications after a heart attack include aspirin, blood thinners like clopidogrel, beta-blockers, ACE inhibitors, and statins. These medications help prevent future heart attacks and manage heart health."
+            },
+            "mi-food": {
+                title: "Food Habits for Myocardial Infarction",
+                content: "Focus on a low-fat, high-fiber diet. Include plenty of fruits, vegetables, whole grains, and lean proteins. Avoid saturated fats, trans fats, and excessive salt. Consider the DASH or Mediterranean diet."
+            },
+            "hmi-info": {
+                title: "History of Myocardial Infarction Information",
+                content: "A history of myocardial infarction means you've had a heart attack in the past. This puts you at higher risk for future heart problems, so it's crucial to manage your heart health carefully."
+            },
+            "hmi-medication": {
+                title: "Medication for History of Myocardial Infarction",
+                content: "Long-term medications often include aspirin, beta-blockers, ACE inhibitors, and statins. These help prevent future heart attacks and manage overall heart health. Regular check-ups and medication reviews are important."
+            },
+            "hmi-food": {
+                title: "Food Habits for History of Myocardial Infarction",
+                content: "Maintain a heart-healthy diet low in saturated fats and rich in fruits, vegetables, and whole grains. Control portion sizes, limit sodium intake, and avoid processed foods. Regular meals and staying hydrated are important."
+            }
+        };
+
+        function openModal(contentKey) {
+            const content = contentMap[contentKey];
+            modalTitle.textContent = content.title;
+            modalContent.textContent = content.content;
+            modal.style.display = "block";
+        }
+
+        span.onclick = function () {
+            modal.style.display = "none";
+        }
+
+        window.onclick = function (event) {
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
+    </script>
+</body>
+
+</html>
