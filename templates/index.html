@@ -1,88 +1,462 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ECG Disease Detection</title>
+    <title>CardioInsight | Revolutionary ECG Analysis</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;600&display=swap');
-        
-        body {
-            font-family: 'Roboto', sans-serif;
+        :root {
+            --primary-blue: #1a3c6e;
+            /* Deep medical blue */
+            --secondary-blue: #4a7bb8;
+            /* Lighter blue accent */
+            --white: #ffffff;
+            --light-gray: #f5f6f5;
+            /* Subtle background */
+            --dark-gray: #333333;
+            /* Text color */
+            --shadow: rgba(0, 0, 0, 0.1);
+            --pulse-red: #ff3366;
+            /* Retained for ECG animation */
+            --pulse-green: #33ff66;
+            /* Retained for ECG animation */
+        }
+
+        * {
             margin: 0;
             padding: 0;
-            min-height: 100vh;
-            background: url('/static/assets/img/people_ocean_bg.jpg') no-repeat center center;
-            background-size: cover;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            color: #fff;
+            box-sizing: border-box;
         }
 
-        .navbar {
-            position: absolute;
-            top: 0;
-            width: 100%;
-            padding: 15px 0;
-            display: flex;
-            justify-content: center;
-            background: transparent;
-        }
-
-        .navbar a {
-            color: #fff;
-            text-decoration: none;
-            margin: 0 20px;
-            font-weight: 500;
-            font-size: 1.2rem;
-        }
-
-        .hero {
-            max-width: 700px;
-            border-radius: 10px;
-        }
-
-        h1 {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
+        body {
+            font-family: 'Arial', sans-serif;
+            background: var(--light-gray);
+            color: var(--dark-gray);
+            line-height: 1.6;
+            position: relative;
+            min-height: 200vh;
         }
 
         p {
-            padding-bottom: 20px;
-            font-size: 1.2rem;
-            margin-bottom: 20px;
+            color: #000000;
+            /* Changed all p tags to black */
         }
 
-        .btn {
-            background: #037903;
-            color: #fff;
-            padding: 12px 25px;
+        .navbar {
+            position: fixed;
+            width: 100%;
+            padding: 1.5rem 3rem;
+            border-bottom: 3px solid var(--primary-blue);
+            box-shadow: 0 2px 10px var(--shadow);
+            z-index: 1000;
+            background: var(--white);
+            transition: background-color 0.3s ease;
+        }
+
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-family: 'Montserrat', sans-serif;
+            /* Changed font */
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary-blue);
             text-decoration: none;
-            font-size: 1.2rem;
-            border-radius: 50px;
-            transition: 0.3s;
         }
 
-        .btn:hover {
-            background: #d33d18;
-            transform: scale(1.05);
+        .nav-links a {
+            color: var(--primary-blue);
+            text-decoration: none;
+            margin-left: 2rem;
+            font-size: 1.1rem;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: var(--secondary-blue);
+        }
+
+        .blur-zone {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            height: 92px;
+            z-index: 999;
+            pointer-events: none;
+            backdrop-filter: blur(5px);
+        }
+
+        .hero {
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            padding-top: 100px;
+            z-index: 0;
+        }
+
+        .hero-content {
+            text-align: center;
+            padding: 2rem;
+            max-width: 800px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        h1 {
+            font-family: 'Roboto', sans-serif;
+            /* Changed font */
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
+            color: var(--primary-blue);
+        }
+
+        .subtitle {
+            font-size: 1.3rem;
+            color: var(--dark-gray);
+            opacity: 0.8;
+            max-width: 600px;
+            position: relative;
+        }
+
+        .ecg-wave {
+            width: 100%;
+            height: 60px;
+            position: relative;
+            overflow: hidden;
+            max-width: 600px;
+        }
+
+        .wave-line {
+            stroke-width: 2;
+            fill: none;
+            animation: waveMove 4s infinite linear, colorChange 2s infinite alternate;
+        }
+
+        .analyze-btn {
+            padding: 1rem 3rem;
+            font-size: 1.2rem;
+            background: var(--primary-blue);
+            border: none;
+            border-radius: 50px;
+            color: var(--white);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .analyze-btn::after {
+            content: '→';
+            font-size: 1.5rem;
+            animation: arrowBounce 1s infinite;
+        }
+
+        .analyze-btn:hover {
+            transform: translateY(-5px);
+            background: var(--secondary-blue);
+            box-shadow: 0 0 30px var(--shadow);
+        }
+
+        .particles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        .particle {
+            position: absolute;
+            background: var(--primary-blue);
+            border-radius: 50%;
+            opacity: 0.5;
+            animation: float 15s infinite;
+        }
+
+        .how-it-works {
+            padding: 4rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1;
+            position: relative;
+            min-height: 60vh;
+        }
+
+        .how-it-works-left {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        .how-it-works-left::before {
+    content: '🩺';
+    font-size: 15rem;
+    background: linear-gradient(45deg, var(--primary-blue), var(--secondary-blue)); /* Vibrant gradient */
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: spin 10s infinite linear;
+    position: absolute;
+    z-index: 0;
+    opacity: 0.4; /* Increased for better visibility */
+}
+
+
+        .how-it-works-right {
+            flex: 1;
+            padding: 0 2rem;
+            text-align: left;
+            background: var(--white);
+        }
+
+        .how-it-works-right h2 {
+            font-family: 'Poppins', sans-serif;
+            /* Changed font */
+            font-size: 2.5rem;
+            margin-bottom: 2rem;
+            color: var(--primary-blue);
+            text-align: center;
+            /* Centered title */
+        }
+
+        .how-it-works-right p {
+            max-width: 600px;
+            margin-bottom: 1.5rem;
+            text-align: justify;
+        }
+
+        .spacer {
+            height: 2rem;
+            /* Replaced neon-line with a simple spacer */
+        }
+
+        footer {
+            padding: 2rem;
+            text-align: center;
+            background: var(--white);
+            position: relative;
+            z-index: 1;
+            box-shadow: 0 -2px 10px var(--shadow);
+        }
+
+        footer p {
+            color: #000000;
+            /* Explicitly black */
+            opacity: 0.7;
+            font-size: 0.9rem;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: translate(-50%, -50%) scale(1);
+            }
+
+            50% {
+                transform: translate(-50%, -50%) scale(1.1);
+            }
+        }
+
+        @keyframes waveMove {
+            0% {
+                transform: translateX(0);
+            }
+
+            100% {
+                transform: translateX(-50%);
+            }
+        }
+
+        @keyframes colorChange {
+            0% {
+                stroke: var(--pulse-red);
+            }
+
+            100% {
+                stroke: var(--pulse-green);
+            }
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(0);
+                opacity: 0.5;
+            }
+
+            50% {
+                opacity: 0.8;
+            }
+
+            100% {
+                transform: translateY(-100vh);
+                opacity: 0;
+            }
+        }
+
+        @keyframes arrowBounce {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            50% {
+                transform: translateX(5px);
+            }
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5rem;
+            }
+
+            .subtitle {
+                font-size: 1rem;
+            }
+
+            .navbar {
+                padding: 1rem;
+            }
+
+            .nav-links a {
+                margin-left: 1rem;
+            }
+
+            .ecg-wave {
+                height: 40px;
+            }
+
+            .how-it-works {
+                flex-direction: column;
+                padding: 2rem;
+            }
+
+            .how-it-works-left::before {
+                font-size: 10rem;
+            }
+
+            .how-it-works-right h2 {
+                font-size: 2rem;
+            }
+
+            .how-it-works-right {
+                padding: 1rem;
+            }
+
+            .blur-zone {
+                height: 76px;
+            }
         }
     </style>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto&family=Montserrat&family=Poppins&display=swap"
+        rel="stylesheet">
 </head>
+
 <body>
     <nav class="navbar">
-        <a href="/">Home</a>
-        <a href="/contact">Contact</a>
-        <a href="{{ url_for('cardioinsight') }}">CardioInsight®</a>
+        <div class="nav-container">
+            <div class="logo">CardioInsight</div>
+            <div class="nav-links">
+                <a href="/">Home</a>
+                <a href="/contact">Contact</a>
+                <a href="{{ url_for('cardioinsight') }}">CardioInsight</a>
+            </div>
+        </div>
     </nav>
-    
-    <div class="hero">
-        <h1>Listen to Your Heart—We’ll Help You Understand It.</h1>
-        <p>Experience the power of AI at your fingertips – get instant insights into your heart health with just a click.</p>
-        <a href="{{ url_for('upload') }}" class="btn">Get Started</a>
-    </div>
+
+    <div class="blur-zone"></div>
+
+    <section class="hero">
+        <div class="particles">
+            <!-- JavaScript will generate particles -->
+        </div>
+        <div class="hero-content">
+            <h1>Heart Intelligence</h1>
+            <p class="subtitle">Experience the future of ECG analysis with our AI-powered technology</p>
+            <div class="ecg-wave">
+                <svg width="200%" height="100%">
+                    <path class="wave-line"
+                        d="M0 30 L100 30 L120 10 L140 50 L160 20 L180 40 L200 30 L300 30 L320 10 L340 50 L360 20 L380 40 L400 30 L500 30 L520 10 L540 50 L560 20 L580 40 L600 30 L1200 30" />
+                </svg>
+            </div>
+            <button class="analyze-btn" onclick="window.location.href='/upload'">
+                Analyze Now
+            </button>
+        </div>
+    </section>
+
+    <section class="how-it-works">
+        <div class="how-it-works-left">
+            <!-- Spinning Stethoscope -->
+        </div>
+        <div class="how-it-works-right">
+            <h2>How It Works</h2>
+            <p>CardioInsight leverages advanced AI technology to analyze electrocardiograms (ECGs) with unparalleled
+                accuracy. Simply upload your ECG data, and our system processes it in real-time, identifying patterns
+                and anomalies that could indicate cardiovascular issues.</p>
+            <p><strong>About Cardiovascular Diseases:</strong> Cardiovascular diseases (CVDs) are a group of disorders
+                affecting the heart and blood vessels, including coronary artery disease, heart failure, and
+                arrhythmias. They are the leading cause of death globally, claiming millions of lives each year. Risk
+                factors include high blood pressure, smoking, diabetes, and poor diet, often leading to symptoms like
+                chest pain, shortness of breath, or irregular heartbeats.</p>
+            <p><strong>Early Detection Saves Lives:</strong> Early detection of CVDs through tools like CardioInsight
+                can significantly improve outcomes. By identifying abnormalities in ECG readings before symptoms
+                escalate, patients can seek timely medical intervention—such as lifestyle changes, medication, or
+                surgery—potentially preventing heart attacks, strokes, or sudden cardiac death. Our technology empowers
+                individuals and healthcare providers to act proactively, reducing the burden of these preventable
+                conditions.</p>
+        </div>
+    </section>
+
+    <div class="spacer"></div>
+    <footer>
+        <p>© 2023 CardioInsight Technologies. All Rights Reserved.</p>
+    </footer>
+
+    <script>
+        const particlesContainer = document.querySelector('.particles');
+        for (let i = 0; i < 20; i++) {
+            const particle = document.createElement('div');
+            particle.classList.add('particle');
+            particle.style.width = `${Math.random() * 8 + 4}px`; /* Increased size */
+            particle.style.height = particle.style.width;
+            particle.style.left = `${Math.random() * 100}%`;
+            particle.style.top = `${Math.random() * 100}%`;
+            particle.style.animationDuration = `${Math.random() * 10 + 5}s`;
+            particle.style.animationDelay = `${Math.random() * 5}s`;
+            particlesContainer.appendChild(particle);
+        }
+    </script>
 </body>
+
 </html>

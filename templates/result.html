@@ -1,12 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ECG Classification Result</title>
+    <title>ECG Classification Result - CardioInsight</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap');
+        :root {
+            --primary-blue: #1a3c6e; /* Deep medical blue */
+            --secondary-blue: #4a7bb8; /* Lighter blue accent */
+            --white: #ffffff;
+            --light-gray: #f5f6f5; /* Subtle background */
+            --dark-gray: #333333; /* Text color */
+            --shadow: rgba(0, 0, 0, 0.1);
+            --pulse-red: #ff3366; /* For subtle accents */
+            --pulse-green: #33ff66; /* For subtle accents */
+        }
 
         * {
             margin: 0;
@@ -15,54 +23,58 @@
         }
 
         body {
-            font-family: 'Poppins', sans-serif;
+            font-family: 'Arial', sans-serif;
             min-height: 100vh;
-            background-color: white;
-            color: #333;
+            background: var(--light-gray);
+            color: var(--dark-gray);
+            line-height: 1.6;
             display: flex;
             flex-direction: column;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        p {
+            color: #000000; /* Black text for readability */
         }
 
         .navbar {
-            background: rgba(0, 0, 0, 0.1);
-            backdrop-filter: blur(10px);
-            padding: 20px 0;
             position: fixed;
             width: 100%;
-            top: 0;
+            padding: 1.5rem 3rem;
+            border-bottom: 3px solid var(--primary-blue);
+            box-shadow: 0 2px 10px var(--shadow);
             z-index: 1000;
+            background: var(--white);
+            transition: background-color 0.3s ease;
         }
 
-        .nav-content {
-            max-width: 1200px;
+        .nav-container {
+            max-width: 1400px;
             margin: 0 auto;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0 20px;
         }
 
         .logo {
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: #333;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary-blue);
             text-decoration: none;
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 30px;
         }
 
         .nav-links a {
-            color: #333;
+            color: var(--primary-blue);
             text-decoration: none;
-            font-weight: 500;
-            transition: color 0.3s ease;
+            margin-left: 2rem;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
         }
 
         .nav-links a:hover {
-            color: #00ff88;
+            color: var(--secondary-blue);
         }
 
         .main-content {
@@ -70,120 +82,306 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 100px 20px;
+            padding: 120px 20px;
+            position: relative;
+        }
+
+        .particles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        .particle {
+            position: absolute;
+            background: var(--primary-blue);
+            border-radius: 50%;
+            opacity: 0.5;
+            animation: float 15s infinite;
         }
 
         .result-container {
-            background-color: white;
+            background: var(--white);
             border-radius: 20px;
             padding: 40px;
             width: 100%;
-            max-width: 600px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
-            border: 1px solid rgba(0, 0, 0, 0.1);
+            max-width: 900px;
+            box-shadow: 0 10px 30px var(--shadow);
             text-align: center;
+            position: relative;
+            z-index: 1;
         }
 
         h1 {
-            font-size: 2.5rem;
+            font-family: 'Roboto', sans-serif;
+            font-size: 3rem;
             margin-bottom: 30px;
-            color: #00b8ff;
-            background: none;
-            -webkit-background-clip: text;
-            background-clip: text;
+            color: var(--primary-blue);
         }
 
-        .result {
-            background: rgba(0, 0, 0, 0.05);
-            border-radius: 15px;
-            padding: 30px;
-            margin-bottom: 30px;
+        .dropdown {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .dropdown input[type="checkbox"] {
+            display: none;
+        }
+
+        .dropdown-label {
+            display: block;
+            background: var(--light-gray);
+            padding: 15px 20px;
+            border-radius: 10px;
+            font-family: 'Poppins', sans-serif;
             font-size: 1.2rem;
-            color: #333;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--primary-blue);
+            cursor: pointer;
             transition: all 0.3s ease;
+            position: relative;
         }
 
-        .result:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        .dropdown-label:hover {
+            background: var(--secondary-blue);
+            color: var(--white);
+        }
+
+        .dropdown-label::after {
+            content: '▼';
+            position: absolute;
+            right: 20px;
+            font-size: 1rem;
+            transition: transform 0.3s ease;
+        }
+
+        .dropdown input[type="checkbox"]:checked ~ .dropdown-label::after {
+            transform: rotate(180deg);
+        }
+
+        .dropdown-content {
+            max-height: 0;
+            overflow: hidden;
+            background: var(--light-gray);
+            border-radius: 10px;
+            transition: max-height 0.3s ease;
+            padding: 0;
+        }
+
+        .dropdown input[type="checkbox"]:checked ~ .dropdown-content {
+            max-height: 300px; /* Default for most sections */
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        #toggle-leads:checked ~ .dropdown-content {
+            max-height: 600px; /* Larger for leads */
+        }
+
+        .details {
+            text-align: left;
+        }
+
+        .details p {
+            margin: 10px 0;
+        }
+
+        .graph img {
+            max-width: 100%;
+            border-radius: 5px;
+            box-shadow: 0 5px 15px var(--shadow);
+            transition: transform 0.3s ease;
+        }
+
+        .graph img:hover {
+            transform: scale(1.05);
+        }
+
+        .lead-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .lead-item {
+            background: var(--white);
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px var(--shadow);
+        }
+
+        .lead-item h4 {
+            font-family: 'Poppins', sans-serif;
+            color: var(--secondary-blue);
+            margin-bottom: 10px;
         }
 
         .btn {
-            background: linear-gradient(45deg, #00ff88, #00b8ff);
-            color: #fff;
-            padding: 10px 30px;
+            padding: 12px 35px;
+            font-size: 1.1rem;
+            background: var(--primary-blue);
             border: none;
             border-radius: 50px;
-            font-size: 1.1rem;
-            font-weight: 600;
+            color: var(--white);
             cursor: pointer;
             transition: all 0.3s ease;
-            display: inline-block;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
             text-decoration: none;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+            font-family: 'Poppins', sans-serif;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::after {
+            content: '→';
+            font-size: 1.2rem;
+            animation: arrowBounce 1s infinite;
         }
 
         .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(0, 255, 136, 0.2);
+            background: var(--secondary-blue);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px var(--shadow);
         }
 
-        /* Container to hold buttons side by side */
         .btn-container {
             display: flex;
-            gap: 20px; /* Add space between buttons */
-            justify-content: center; /* Center align buttons */
+            gap: 20px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0); opacity: 0.5; }
+            50% { opacity: 0.8; }
+            100% { transform: translateY(-100vh); opacity: 0; }
+        }
+
+        @keyframes arrowBounce {
+            0%, 100% { transform: translateX(0); }
+            50% { transform: translateX(5px); }
         }
 
         @media (max-width: 768px) {
-            .nav-content {
-                flex-direction: column;
-                gap: 20px;
-            }
+            .navbar { padding: 1rem; }
+            .nav-container { flex-direction: column; gap: 15px; }
+            .nav-links a { margin-left: 1rem; }
+            .main-content { padding: 100px 15px; }
+            .result-container { padding: 30px 20px; }
+            h1 { font-size: 2rem; }
+            .lead-grid { grid-template-columns: 1fr; }
+            .btn-container { flex-direction: column; gap: 15px; }
+            #toggle-leads:checked ~ .dropdown-content { max-height: 400px; }
+        }
 
-            .result-container {
-                padding: 30px 20px;
+        @media (prefers-reduced-motion: reduce) {
+            .particle, .btn::after {
+                animation: none;
             }
-
-            h1 {
-                font-size: 2rem;
-            }
-
-            /* Stack buttons vertically on smaller screens */
-            .btn-container {
-                flex-direction: column;
-                gap: 10px;
+            .dropdown-content {
+                transition: none;
             }
         }
     </style>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto&family=Montserrat&family=Poppins&display=swap" rel="stylesheet">
 </head>
-
 <body>
     <nav class="navbar">
-        <div class="nav-content">
-            <a href="{{ url_for('index') }}" class="logo">CardioDetect</a>
+        <div class="nav-container">
+            <a href="{{ url_for('index') }}" class="logo">CardioInsight</a>
             <div class="nav-links">
                 <a href="{{ url_for('index') }}">Home</a>
-                <a href="{{ url_for('cardioinsight') }}">CardioInsight®</a>
-                <a href="/contact">Contact</a>
+                <a href="{{ url_for('cardioinsight') }}">CardioInsight</a>
+                <a href="{{ url_for('contact') }}">Contact</a>
+                <a href="{{ url_for('upload') }}">Upload ECG</a>
             </div>
         </div>
     </nav>
 
     <div class="main-content">
+        <div class="particles"></div>
         <div class="result-container">
-            <h1>ECG Classification Result</h1>
-            <div class="result">
-                <p>{{ result }}</p>
+            <h1>ECG Classification Results</h1>
+
+            <div class="dropdown">
+                <input type="checkbox" id="toggle-details" class="dropdown-toggle">
+                <label for="toggle-details" class="dropdown-label">Prediction & Notes</label>
+                <div class="dropdown-content">
+                    <div class="details">
+                        <p><strong>Prediction:</strong> {{ details['prediction'] }}</p>
+                        <p><strong>Notes:</strong> {{ details['notes'] }}</p>
+                    </div>
+                </div>
             </div>
+
+            <div class="dropdown">
+                <input type="checkbox" id="toggle-uploaded" class="dropdown-toggle">
+                <label for="toggle-uploaded" class="dropdown-label">Uploaded ECG Image</label>
+                <div class="dropdown-content">
+                    <img src="{{ url_for('static', filename='uploads/' + img_filename) }}" alt="Uploaded ECG" width="700">
+                </div>
+            </div>
+
+            <div class="dropdown">
+                <input type="checkbox" id="toggle-grayscale" class="dropdown-toggle">
+                <label for="toggle-grayscale" class="dropdown-label">Grayscale Image</label>
+                <div class="dropdown-content">
+                    <img src="{{ url_for('static', filename='processed/gray_' + img_filename) }}" alt="Grayscale ECG" width="700">
+                </div>
+            </div>
+
+            <div class="dropdown">
+                <input type="checkbox" id="toggle-binary" class="dropdown-toggle">
+                <label for="toggle-binary" class="dropdown-label">Binary Image (Otsu's Thresholding)</label>
+                <div class="dropdown-content">
+                    <img src="{{ url_for('static', filename='processed/binary_' + img_filename) }}" alt="Binary ECG" width="700">
+                </div>
+            </div>
+
+            <div class="dropdown">
+                <input type="checkbox" id="toggle-leads" class="dropdown-toggle">
+                <label for="toggle-leads" class="dropdown-label">Individual ECG Leads</label>
+                <div class="dropdown-content">
+                    <div class="lead-grid">
+                        {% for lead in ['I', 'II', 'III', 'aVR', 'aVL', 'aVF', 'V1', 'V2', 'V3', 'V4', 'V5', 'V6'] %}
+                        <div class="lead-item">
+                            <h4>{{ lead }}</h4>
+                            {% set trimmed_filename = img_filename.rsplit('.', 1)[0] %}
+                            <img src="{{ url_for('static', filename='processed/' + trimmed_filename + '_lead_' + lead + '.png') }}" alt="ECG Lead {{ lead }}" width="300">
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <p>What do these ECG leads mean? Download our report to learn more.</p>
             <div class="btn-container">
-                <a href="{{ url_for('upload') }}" class="btn">Upload Another ECG</a>
-                <a href="{{ url_for('cardioinsight') }}" class="btn">View Insights</a>
+                <a href="{{ url_for('download_pdf', pdf_filename=pdf_filename) }}" class="btn">Download Report</a>
+                <a href="{{ url_for('upload') }}" class="btn">Upload Another</a>
             </div>
         </div>
     </div>
-</body>
 
+    <script>
+        const particlesContainer = document.querySelector('.particles');
+        for (let i = 0; i < 20; i++) {
+            const particle = document.createElement('div');
+            particle.classList.add('particle');
+            particle.style.width = `${Math.random() * 8 + 4}px`;
+            particle.style.height = particle.style.width;
+            particle.style.left = `${Math.random() * 100}%`;
+            particle.style.top = `${Math.random() * 100}%`;
+            particle.style.animationDuration = `${Math.random() * 10 + 5}s`;
+            particle.style.animationDelay = `${Math.random() * 5}s`;
+            particlesContainer.appendChild(particle);
+        }
+
+        window.addEventListener('scroll', () => {
+            const navbar = document.querySelector('.navbar');
+            navbar.style.backgroundColor = window.scrollY > 50 ? 'rgba(255, 255, 255, 0.95)' : 'var(--white)';
+        });
+    </script>
+</body>
 </html>

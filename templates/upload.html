@@ -1,12 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Upload ECG Image</title>
+    <title>Upload ECG Image - CardioInsight</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap');
+        :root {
+            --primary-blue: #1a3c6e;
+            --secondary-blue: #4a7bb8;
+            --white: #ffffff;
+            --light-gray: #f5f6f5;
+            --dark-gray: #333333;
+            --shadow: rgba(0, 0, 0, 0.1);
+            --pulse-red: #ff3366;
+            --pulse-green: #33ff66;
+        }
 
         * {
             margin: 0;
@@ -15,58 +23,70 @@
         }
 
         body {
-            font-family: 'Poppins', sans-serif;
+            font-family: 'Arial', sans-serif;
             min-height: 100vh;
-            /* background: url('/static/assets/img/gradient_abd_blue.jpg'); */
-            background-color: white;
-            background-size: cover;
-            background-position: center;
-            color: #000000;
+            background: var(--light-gray);
+            color: var(--dark-gray);
             display: flex;
             flex-direction: column;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            background: white;
+            opacity: 0.05; /* Dulled effect */
+            filter: blur(10px); /* Blurred effect */
+            z-index: -1;
+            animation: fadeIn 2s ease-in-out;
+        }
+
+        p {
+            color: #000000;
         }
 
         .navbar {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            padding: 20px 0;
             position: fixed;
-            border-bottom: 1px solid green;
             width: 100%;
-            top: 0;
+            padding: 1.5rem 3rem;
+            border-bottom: 3px solid var(--primary-blue);
+            box-shadow: 0 2px 10px var(--shadow);
             z-index: 1000;
+            background: var(--white);
+            transition: background-color 0.3s ease;
         }
 
-        .nav-content {
-            max-width: 1200px;
+        .nav-container {
+            max-width: 1400px;
             margin: 0 auto;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0 20px;
         }
 
         .logo {
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: #000000;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary-blue);
             text-decoration: none;
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 30px;
         }
 
         .nav-links a {
-            color: #000000;
+            color: var(--primary-blue);
             text-decoration: none;
-            font-weight: 500;
-            transition: color 0.3s ease;
+            margin-left: 2rem;
+            font-size: 1.1rem;
+            font-family: 'Poppins', sans-serif;
+            transition: all 0.3s ease;
         }
 
         .nav-links a:hover {
-            color: #00ff88;
+            color: var(--secondary-blue);
         }
 
         .main-content {
@@ -74,34 +94,45 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 100px 20px;
+            padding: 120px 20px;
+            position: relative;
+        }
+
+        .particles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        .particle {
+            position: absolute;
+            background: var(--primary-blue);
+            border-radius: 50%;
+            opacity: 0.5;
+            animation: float 15s infinite;
         }
 
         .upload-container {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
+            background: var(--white);
             border-radius: 20px;
             padding: 40px;
             width: 100%;
             max-width: 600px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-            border: 1px solid rgba(0, 0, 0, 0.1);
+            box-shadow: 0 10px 30px var(--shadow);
             text-align: center;
-
         }
 
         h1 {
+            font-family: 'Roboto', sans-serif;
             font-size: 2.5rem;
             margin-bottom: 30px;
-            background: rgb(0, 0, 0);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            text-align: center;
+            color: var(--primary-blue);
+            text-shadow: 0 2px 5px var(--shadow);
         }
 
         .upload-area {
-            border: 2px dashed rgba(0, 0, 0, 0.778);
+            border: 2px dashed var(--primary-blue);
             border-radius: 15px;
             padding: 40px 20px;
             text-align: center;
@@ -109,22 +140,29 @@
             transition: all 0.3s ease;
             margin-bottom: 30px;
             position: relative;
+            background: var(--light-gray);
         }
 
         .upload-area:hover {
-            border-color: #00ff88;
-            background: rgba(0, 255, 136, 0.05);
+            border-color: var(--secondary-blue);
+            background: rgba(74, 123, 184, 0.1);
         }
 
         .upload-icon {
             font-size: 3rem;
             margin-bottom: 15px;
-            color: #00ff88;
+            color: var(--secondary-blue);
+            transition: transform 0.3s ease;
+        }
+
+        .upload-area:hover .upload-icon {
+            transform: scale(1.1);
         }
 
         .upload-text {
-            color: rgba(0, 0, 0, 0.8);
+            color: var(--dark-gray);
             margin-bottom: 10px;
+            font-family: 'Poppins', sans-serif;
         }
 
         .file-input {
@@ -137,135 +175,196 @@
             cursor: pointer;
         }
 
+        .selected-file {
+            margin-top: 15px;
+            color: var(--dark-gray);
+            font-size: 0.9rem;
+            font-family: 'Poppins', sans-serif;
+            display: none; /* Initially hidden */
+        }
+
         .btn {
-            text-align: center;
-            background: linear-gradient(45deg, #00ff88, #00b8ff);
-            color: #1a1a1a;
+            background: var(--primary-blue);
+            color: var(--white);
             padding: 15px 40px;
             border: none;
             border-radius: 50px;
             font-size: 1.1rem;
             font-weight: 600;
+            font-family: 'Poppins', sans-serif;
             cursor: pointer;
             transition: all 0.3s ease;
-            width: auto;
-            /* Let button size based on content */
             text-transform: uppercase;
             letter-spacing: 1px;
-            margin-top: 20px;
-            /* Add some spacing between elements */
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.5s ease, height 0.5s ease;
+        }
+
+        .btn:hover::before {
+            width: 300px;
+            height: 300px;
         }
 
         .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(0, 255, 136, 0.2);
+            background: var(--secondary-blue);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px var(--shadow);
         }
 
-        .selected-file {
-            margin-top: 15px;
-            color: rgba(2, 2, 2, 0.8);
-            font-size: 0.9rem;
-            display: none;
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0); opacity: 0.5; }
+            50% { opacity: 0.8; }
+            100% { transform: translateY(-100vh); opacity: 0; }
         }
 
         @media (max-width: 768px) {
-            .nav-content {
-                flex-direction: column;
-                gap: 20px;
-            }
-
-            .upload-container {
-                padding: 30px 20px;
-            }
-
-            h1 {
-                font-size: 2rem;
-            }
+            .navbar { padding: 1rem; }
+            .nav-container { flex-direction: column; gap: 15px; }
+            .nav-links a { margin-left: 1rem; }
+            .main-content { padding: 100px 15px; }
+            .upload-container { padding: 30px 20px; }
+            h1 { font-size: 2rem; }
         }
     </style>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto&family=Montserrat&family=Poppins&display=swap" rel="stylesheet">
 </head>
-
 <body>
     <nav class="navbar">
-        <div class="nav-content">
-            <a href="{{ url_for('index') }}" class="logo">CardioDetect</a>
+        <div class="nav-container">
+            <a href="{{ url_for('index') }}" class="logo">CardioInsight</a>
             <div class="nav-links">
                 <a href="{{ url_for('index') }}">Home</a>
-                <a href="{{ url_for('cardioinsight') }}">CardioInsight®</a>
+                <a href="{{ url_for('cardioinsight') }}">CardioInsight</a>
                 <a href="{{ url_for('contact') }}">Contact</a>
             </div>
         </div>
     </nav>
 
     <div class="main-content">
+        <div class="particles"></div>
         <div class="upload-container">
             <h1>Upload ECG Image</h1>
-            <form action="/upload" method="POST" enctype="multipart/form-data" id="upload-form">
-                <div class="upload-area">
+            <form action="{{ url_for('upload') }}" method="POST" enctype="multipart/form-data" id="upload-form">
+                <div class="upload-area" id="upload-area">
                     <div class="upload-icon">📤</div>
-                    <p class="upload-text">Drag and drop your ECG image here</p>
-                    <p class="upload-text">or click to browse</p>
+                    <p class="upload-text" id="upload-text-1">Drag and drop your ECG image here</p>
+                    <p class="upload-text" id="upload-text-2">or click to browse</p>
                     <input type="file" name="ecg_image" accept="image/*" required class="file-input" id="file-input">
                     <p class="selected-file" id="file-name"></p>
                 </div>
                 <button type="submit" class="btn">Analyze ECG</button>
+                {% if error %}
+                    <p style="color: var(--pulse-red); margin-top: 15px;">{{ error }}</p>
+                {% endif %}
             </form>
         </div>
     </div>
 
     <script>
         const fileInput = document.getElementById('file-input');
-        const fileName = document.getElementById('file-name');
-        const uploadArea = document.querySelector('.upload-area');
+const fileName = document.getElementById('file-name');
+const uploadArea = document.getElementById('upload-area');
+const uploadText1 = document.getElementById('upload-text-1');
+const uploadText2 = document.getElementById('upload-text-2');
+const particlesContainer = document.querySelector('.particles');
 
-        fileInput.addEventListener('change', function (e) {
-            if (this.files && this.files[0]) {
-                fileName.style.display = 'block';
-                fileName.textContent = `Selected: ${this.files[0].name}`;
-                uploadArea.style.borderColor = '#00ff88';
-            }
+const primaryBlue = getComputedStyle(document.documentElement).getPropertyValue('--primary-blue');
+const secondaryBlue = getComputedStyle(document.documentElement).getPropertyValue('--secondary-blue');
+
+function updateUploadArea(selected) {
+    if (selected) {
+        uploadText1.textContent = "Image uploaded";
+        uploadText1.style.fontStyle = 'italic';
+        uploadText2.style.display = 'none';
+        fileName.style.display = 'block';
+        fileName.style.color = '#000'; // Ensure it's black
+    } else {
+        uploadText1.textContent = "Drag and drop your ECG image here";
+        uploadText1.style.fontStyle = 'normal';
+        uploadText2.style.display = 'block';
+        fileName.style.display = 'none';
+    }
+}
+
+fileInput.addEventListener('change', function (e) {
+    if (this.files && this.files[0]) {
+        fileName.textContent = `Selected: ${this.files[0].name}`;
+        updateUploadArea(true);
+        uploadArea.style.borderColor = secondaryBlue;
+    }
+});
+
+['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+    uploadArea.addEventListener(eventName, preventDefaults, false);
+});
+
+function preventDefaults(e) {
+    e.preventDefault();
+    e.stopPropagation();
+}
+
+['dragenter', 'dragover'].forEach(eventName => {
+    uploadArea.addEventListener(eventName, highlight, false);
+});
+
+['dragleave', 'drop'].forEach(eventName => {
+    uploadArea.addEventListener(eventName, unhighlight, false);
+});
+
+function highlight(e) {
+    uploadArea.style.borderColor = secondaryBlue;
+    uploadArea.style.background = 'rgba(74, 123, 184, 0.1)';
+}
+
+function unhighlight(e) {
+    uploadArea.style.borderColor = primaryBlue;
+    uploadArea.style.background = 'var(--light-gray)';
+}
+
+uploadArea.addEventListener('drop', handleDrop, false);
+
+function handleDrop(e) {
+    const dt = e.dataTransfer;
+    const files = dt.files;
+    fileInput.files = files;
+
+    if (files && files[0]) {
+        fileName.textContent = `Selected: ${files[0].name}`;
+        updateUploadArea(true);
+    }
+}
+
+// Initialize upload area state
+updateUploadArea(false);
+
+        // Particle effect
+       
+
+        window.addEventListener('scroll', () => {
+            const navbar = document.querySelector('.navbar');
+            navbar.style.backgroundColor = window.scrollY > 50 ? 'rgba(255, 255, 255, 0.95)' : 'var(--white)';
         });
 
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-            uploadArea.addEventListener(eventName, preventDefaults, false);
-        });
-
-        function preventDefaults(e) {
-            e.preventDefault();
-            e.stopPropagation();
-        }
-
-        ['dragenter', 'dragover'].forEach(eventName => {
-            uploadArea.addEventListener(eventName, highlight, false);
-        });
-
-        ['dragleave', 'drop'].forEach(eventName => {
-            uploadArea.addEventListener(eventName, unhighlight, false);
-        });
-
-        function highlight(e) {
-            uploadArea.style.borderColor = '#00ff88';
-            uploadArea.style.background = 'rgba(0, 255, 136, 0.05)';
-        }
-
-        function unhighlight(e) {
-            uploadArea.style.borderColor = 'rgba(255, 255, 255, 0.3)';
-            uploadArea.style.background = 'transparent';
-        }
-
-        uploadArea.addEventListener('drop', handleDrop, false);
-
-        function handleDrop(e) {
-            const dt = e.dataTransfer;
-            const files = dt.files;
-            fileInput.files = files;
-
-            if (files && files[0]) {
-                fileName.style.display = 'block';
-                fileName.textContent = `Selected: ${files[0].name}`;
-            }
-        }
+        // Initialize upload area state
+        updateUploadArea(false);
     </script>
 </body>
-
 </html>

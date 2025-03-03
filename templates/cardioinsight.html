@@ -3,9 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cardio Insight</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <title>CardioInsight - Heart Conditions</title>
     <style>
+        :root {
+            --primary-blue: #1a3c6e;
+            --secondary-blue: #4a7bb8;
+            --white: #ffffff;
+            --light-gray: #f5f6f5;
+            --dark-gray: #333333;
+            --shadow: rgba(0, 0, 0, 0.1);
+            --pulse-red: #ff3366;
+            --pulse-green: #33ff66;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -13,36 +23,57 @@
         }
 
         body {
-            font-family: 'Poppins', sans-serif;
+            font-family: 'Arial', sans-serif;
             min-height: 100vh;
-            background: url('/static/assets/img/lake.jpg');
-            background-size: cover;
-            background-position: center;
-            color: #000000;
+            background: var(--light-gray);
+            color: var(--dark-gray);
             display: flex;
             flex-direction: column;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            background: white;
+            opacity: 0.05; /* Lowered opacity to dull it further */
+            filter: blur(10px); /* Added blur effect */
+            z-index: -1;
+            animation: fadeIn 2s ease-in-out;
+        }
+
+        p {
+            color: #000000;
         }
 
         .navbar {
-            padding: 1rem 0;
             position: sticky;
             top: 0;
+            width: 100%;
+            padding: 1.5rem 3rem;
+            border-bottom: 3px solid var(--primary-blue);
+            box-shadow: 0 2px 10px var(--shadow);
             z-index: 1000;
+            background: var(--white);
+            transition: background-color 0.3s ease;
         }
 
-        .nav-content {
-            max-width: 1200px;
+        .nav-container {
+            max-width: 1400px;
             margin: 0 auto;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0 1rem;
         }
 
         .logo {
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: #fff;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary-blue);
             text-decoration: none;
             display: flex;
             align-items: center;
@@ -50,97 +81,165 @@
 
         .logo svg {
             margin-right: 0.5rem;
+            fill: var(--primary-blue);
+            transition: transform 0.3s ease;
         }
 
-        .nav-links {
-            display: flex;
-            gap: 1.5rem;
+        .logo:hover svg {
+            transform: scale(1.1);
         }
 
         .nav-links a {
-            color: #fff;
+            color: var(--primary-blue);
             text-decoration: none;
-            font-weight: 500;
-            transition: color 0.3s ease;
+            margin-left: 2rem;
+            font-size: 1.1rem;
+            font-family: 'Poppins', sans-serif;
+            transition: all 0.3s ease;
         }
 
         .nav-links a:hover {
-            color: #ffd700;
+            color: var(--secondary-blue);
         }
 
         .main-content {
-            background-color: #b3f6bb6e;
-            margin-top:10%;
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 2rem 1rem;
+            padding: 4rem 2rem;
             z-index: 1;
+            margin-top: 5%;
         }
 
         h1 {
-            font-size: 2.5rem;
-            margin-bottom: 0.5rem;
+            font-family: 'Roboto', sans-serif;
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: var(--primary-blue);
             text-align: center;
+            text-shadow: 0 2px 5px var(--shadow);
         }
 
         .subtitle {
-            font-size: 1.2rem;
-            margin-bottom: 2rem;
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.3rem;
+            margin-bottom: 3rem;
             text-align: center;
             opacity: 0.8;
         }
 
         .conditions-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 2.5rem;
             width: 100%;
-            max-width: 1200px;
+            max-width: 1400px;
         }
 
         .condition-card {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 1rem;
-            padding: 1.5rem;
+            background: var(--white);
+            border-radius: 15px;
+            padding: 2rem;
             display: flex;
             flex-direction: column;
             align-items: center;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 5px 15px var(--shadow);
+            transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .condition-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(74, 123, 184, 0.2) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            z-index: -1;
+        }
+
+        .condition-card:hover::before {
+            opacity: 1;
         }
 
         .condition-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 15px 30px var(--shadow);
+            background: rgba(255, 255, 255, 0.95);
         }
 
         .condition-card h2 {
-            font-size: 1.5rem;
-            margin-bottom: 1rem;
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.8rem;
+            margin-bottom: 1.5rem;
+            color: var(--secondary-blue);
             text-align: center;
+            position: relative;
+        }
+
+        .condition-card h2::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 50px;
+            height: 2px;
+            background: var(--primary-blue);
+            transition: width 0.3s ease;
+        }
+
+        .condition-card:hover h2::after {
+            width: 80px;
         }
 
         .btn-group {
             display: flex;
             flex-direction: column;
-            gap: 0.5rem;
+            gap: 0.75rem;
             width: 100%;
         }
 
         .btn {
-            background: rgba(255, 255, 255, 0.2);
-            color: #000000;
+            background: var(--primary-blue);
+            color: var(--white);
             border: none;
-            padding: 0.75rem 1rem;
-            border-radius: 0.5rem;
+            padding: 0.9rem 1.5rem;
+            border-radius: 25px;
             font-size: 1rem;
+            font-family: 'Poppins', sans-serif;
             cursor: pointer;
-            transition: background-color 0.3s ease;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.5s ease, height 0.5s ease;
+        }
+
+        .btn:hover::before {
+            width: 200px;
+            height: 200px;
         }
 
         .btn:hover {
-            background: rgba(255, 255, 255, 0.3);
+            background: var(--secondary-blue);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px var(--shadow);
         }
 
         .modal {
@@ -154,52 +253,73 @@
             background-color: rgba(0, 0, 0, 0.5);
             align-items: center;
             justify-content: center;
+            animation: fadeIn 0.3s ease;
         }
 
         .modal-content {
-            background: #fff;
-            color: #333;
-            padding: 2rem;
-            border-radius: 1rem;
-            max-width: 500px;
+            background: var(--white);
+            color: var(--dark-gray);
+            padding: 2.5rem;
+            border-radius: 15px;
+            max-width: 600px;
             width: 90%;
-            max-height: 90vh;
+            max-height: 80vh;
             overflow-y: auto;
+            box-shadow: 0 15px 40px var(--shadow);
             position: relative;
+            animation: slideIn 0.5s ease;
         }
 
         .close-btn {
             position: absolute;
             top: 1rem;
             right: 1rem;
-            font-size: 1.5rem;
+            font-size: 2rem;
             cursor: pointer;
             background: none;
             border: none;
-            color: #333;
+            color: var(--primary-blue);
+            transition: color 0.3s ease;
+        }
+
+        .close-btn:hover {
+            color: var(--secondary-blue);
         }
 
         .modal-title {
-            font-size: 1.5rem;
-            margin-bottom: 1rem;
+            font-family: 'Roboto', sans-serif;
+            font-size: 1.8rem;
+            margin-bottom: 1.5rem;
+            color: var(--primary-blue);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
 
         @media (max-width: 768px) {
-            .nav-content {
-                flex-direction: column;
-                gap: 1rem;
-            }
-
-            .conditions-grid {
-                grid-template-columns: 1fr;
-            }
+            .navbar { padding: 1rem; }
+            .nav-container { flex-direction: column; gap: 1rem; }
+            .nav-links a { margin-left: 1rem; }
+            .main-content { padding: 2rem 1rem; margin-top: 10%; }
+            h1 { font-size: 2rem; }
+            .conditions-grid { grid-template-columns: 1fr; }
+            .condition-card { padding: 1.5rem; }
+            .modal-content { padding: 1.5rem; max-width: 90%; }
         }
     </style>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto&family=Montserrat&family=Poppins&display=swap" rel="stylesheet">
 </head>
 <body>
     <nav class="navbar">
-        <div class="nav-content">
-            <a href="/cardioinsight" class="logo">
+        <div class="nav-container">
+            <a href="/" class="logo">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
                 </svg>
@@ -214,8 +334,8 @@
     </nav>
 
     <main class="main-content">
-        <h1>Welcome to Cardio Insight</h1>
-        <p class="subtitle">Your one-stop heart info</p>
+        <h1>Welcome to CardioInsight</h1>
+        <p class="subtitle">Your one-stop heart info resource</p>
 
         <div class="conditions-grid">
             <div class="condition-card">
@@ -249,7 +369,7 @@
 
     <div id="modal" class="modal">
         <div class="modal-content">
-            <button class="close-btn" onclick="closeModal()">&times;</button>
+            <button class="close-btn" onclick="closeModal()">×</button>
             <h2 id="modal-title" class="modal-title"></h2>
             <p id="modal-content"></p>
         </div>
@@ -318,4 +438,3 @@
     </script>
 </body>
 </html>
-
