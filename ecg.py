@@ -1,5 +1,6 @@
 import os
 import cv2
+import datetime
 from skimage.io import imread, imsave
 from skimage.color import rgb2gray
 from skimage.filters import gaussian, threshold_otsu
@@ -56,16 +57,14 @@ def preprocess_custom_image(image_path):
 
 def estimate_signal_quality(binary_image):
     edge_density = np.mean(binary_image)
-    if edge_density < 0.2:
-        return "Poor (low contrast)"
-    elif edge_density < 0.5:
-        return "Average"
-    else:
+    if edge_density < 0.01:  # Less than 10% white
+        return "Poor"
+    else:  # 10%+ white
         return "Good"
 
 def detect_artifacts(binary_image):
     noise_level = np.var(binary_image)
-    return "Artifacts detected" if noise_level > 0.02 else "No significant artifacts"
+    return "Artifacts detected" if noise_level > 0.05 else "No significant artifacts"
 
 def split_ecg_leads(image_path):
     """Split a 12-lead ECG image into individual leads and apply preprocessing steps."""
@@ -147,7 +146,7 @@ def split_ecg_leads(image_path):
 
     return lead_images
 
-def predict_ecg(img_path):
+def predict_ecg(img_path, patient_name, patient_age, patient_gender):
     if len(class_labels) == 0:
         return None, None, None, None, None, None
     
@@ -159,27 +158,29 @@ def predict_ecg(img_path):
     predicted_label = class_labels[predicted_class_idx]
     confidence = np.max(predictions) * 100
 
-    # Map abbreviated labels to full names
     label_mapping = {
         "Normal": "Normal",
         "Abnormal": "Abnormal Rhythm",
         "MI": "Myocardial Infarction",
         "History_MI": "History of Myocardial Infarction"
     }
-    display_label = label_mapping.get(predicted_label, predicted_label)  # Fallback to original if not in map
+    display_label = label_mapping.get(predicted_label, predicted_label)
 
     signal_quality = estimate_signal_quality(binary_image)
     artifact_status = detect_artifacts(binary_image)
 
     details = {
-        "prediction": display_label,  # Use full name here
+        "prediction": display_label,
         "confidence": f"{confidence:.2f}%",
         "signal_quality": signal_quality,
         "artifact_status": artifact_status,
         "heart_rate": "N/A",
         "pr_interval": "N/A",
         "qrs_duration": "N/A",
-        "notes": get_clinical_notes(predicted_label)  # Keep original label for notes
+        "notes": get_clinical_notes(predicted_label),
+        "patient_name": patient_name,  # Added patient details
+        "patient_age": patient_age,
+        "patient_gender": patient_gender
     }
 
     graph_path = os.path.join(PROCESSED_FOLDER, f'graph_{os.path.basename(img_path)}.png')
@@ -238,11 +239,29 @@ def generate_pdf(details, img_path, preprocessed_img_path, lead_images):
     normal_style.fontSize = 10
     normal_style.leading = 12
 
-    # --- Page 1: Heading and Images ---
+    # --- Page 1: Heading, Patient Details (Right), and Uploaded Image (Left/Center) ---
     c.setFont("Helvetica-Bold", 16)
-    c.drawString(50, height - 50, "ECG Analysis Report")
+    c.drawString(400, height - 50, "ECG Analysis Report")  # Right-aligned
 
+    # Patient Details on the right
     y = height - 80
+    c.setFont("Helvetica-Bold", 12)
+    c.drawString(400, y, "Patient Information:")
+    y -= 20
+    c.setFont("Helvetica", 10)
+    c.drawString(400, y, f"Name: {details['patient_name']}")
+    y -= 15
+    c.drawString(400, y, f"Age: {details['patient_age']}")
+    y -= 15
+    c.drawString(400, y, f"Gender: {details['patient_gender']}")
+    y -= 30
+    import datetime
+
+    dt = datetime.datetime.now().strftime("%Y-%m-%d %I:%M %p")  # Format as YYYY-MM-DD HH:MM AM/PM
+    c.drawString(400, y, f"Date: {dt}")
+
+
+    # Uploaded Image (left/center)
     c.setFont("Helvetica", 12)
     c.drawString(50, y, "Uploaded ECG Image:")
     y -= 20
@@ -260,16 +279,21 @@ def generate_pdf(details, img_path, preprocessed_img_path, lead_images):
         img_width_points = img_height_points / aspect_ratio
 
     c.drawImage(img_path, 50, y - img_height_points, width=img_width_points, height=img_height_points, preserveAspectRatio=True)
-    y -= (img_height_points + 30)
 
-    c.drawString(50, y, "Preprocessed Binary Image:")
+    # --- Page 2: Preprocessed Binary Image (Left) and Analysis Details (Left, Below Image) ---
+    c.showPage()
+    y = height - 50
+
+    # Preprocessed Binary Image on the left
+    c.setFont("Helvetica-Bold", 16)
+    c.drawString(50, y, "Preprocessed Binary Image")  # Left-aligned title
     y -= 20
 
     if os.path.exists(preprocessed_img_path):
         img_reader = ImageReader(preprocessed_img_path)
         img_width, img_height = img_reader.getSize()
         aspect_ratio = img_height / img_width
-        img_width_points = max_img_width
+        img_width_points = 500  # Fixed width for left side
         img_height_points = img_width_points * aspect_ratio
 
         available_height = y - 50
@@ -278,28 +302,28 @@ def generate_pdf(details, img_path, preprocessed_img_path, lead_images):
             img_width_points = img_height_points / aspect_ratio
 
         c.drawImage(preprocessed_img_path, 50, y - img_height_points, width=img_width_points, height=img_height_points, preserveAspectRatio=True)
+        y -= (img_height_points + 30)  # Space below image for analysis details
     else:
         c.drawString(50, y - 20, "Preprocessed image not found at: " + preprocessed_img_path)
+        y -= 30
 
-    # --- Page 2: Text Details with Explanation ---
-    c.showPage()
-    y = height - 50
+    # Analysis Details below the image, left-aligned
     c.setFont("Helvetica-Bold", 16)
-    c.drawString(50, y, "ECG Analysis Details")
-    y -= 30
+    c.drawString(50, y, "ECG Analysis Details")  # Left-aligned, below image
+    y -= 20
 
-    available_width = width - 100
-    for key, value in details.items():
+    available_width = width - 100  # Full width since it's now left-aligned
+    analysis_details = {k: v for k, v in details.items() if k not in ["patient_name", "patient_age", "patient_gender"]}
+    for key, value in analysis_details.items():
         text = f"<b>{key.replace('_', ' ').title()}:</b> {value}"
         p = Paragraph(text, normal_style)
         p_width, p_height = p.wrap(available_width, height - y)
         if y - p_height < 50:
             c.showPage()
             y = height - 50
-        p.drawOn(c, 50, y - p_height)
+        p.drawOn(c, 50, y - p_height)  # Left-aligned
         y -= p_height + 10
 
-    # Add explanation for "N/A" values
     explanation = (
         "<b>Note:</b> Heart Rate, PR Interval, and QRS Duration are listed as 'N/A' because these measurements require precise temporal data from the raw ECG signal, "
         "which cannot be accurately extracted from a static image alone. This analysis uses a preprocessed image for classification (e.g., Normal, MI) rather than "
@@ -311,14 +335,14 @@ def generate_pdf(details, img_path, preprocessed_img_path, lead_images):
     if y - p_height < 50:
         c.showPage()
         y = height - 50
-    p.drawOn(c, 50, y - p_height)
+    p.drawOn(c, 50, y - p_height)  # Left-aligned
     y -= p_height + 10
 
-    # --- Page 3: ECG Leads with Descriptions ---
+    # --- Page 3: ECG Leads with Descriptions (Unchanged Layout) ---
     c.showPage()
     y = height - 50
     c.setFont("Helvetica-Bold", 16)
-    c.drawString(50, y, "ECG Lead Images (2x6)")
+    c.drawString(50, y, "ECG Lead Images (2x6)")  # Kept left
     y -= 30
 
     lead_descriptions = {

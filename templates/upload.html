@@ -38,7 +38,7 @@
             position: fixed;
             width: 100%;
             height: 100%;
-            background: white;
+            background: url('/static/assets/img/lake.jpg') no-repeat center/cover; /* Fixed from white */
             opacity: 0.05; /* Dulled effect */
             filter: blur(10px); /* Blurred effect */
             z-index: -1;
@@ -131,6 +131,48 @@
             text-shadow: 0 2px 5px var(--shadow);
         }
 
+        /* New Form Styling */
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+            width: 100%;
+        }
+
+        .form-group label {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1rem;
+            color: var(--primary-blue);
+            font-weight: 500;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px 15px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 1rem;
+            color: var(--dark-gray);
+            background: var(--light-gray);
+            border: 2px solid var(--primary-blue);
+            border-radius: 10px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            border-color: var(--secondary-blue);
+            background: var(--white);
+            box-shadow: 0 0 10px var(--shadow);
+        }
+
+        .form-group input:hover,
+        .form-group select:hover {
+            border-color: var(--secondary-blue);
+        }
+
         .upload-area {
             border: 2px dashed var(--primary-blue);
             border-radius: 15px;
@@ -180,7 +222,7 @@
             color: var(--dark-gray);
             font-size: 0.9rem;
             font-family: 'Poppins', sans-serif;
-            display: none; /* Initially hidden */
+            display: none;
         }
 
         .btn {
@@ -263,6 +305,22 @@
         <div class="upload-container">
             <h1>Upload ECG Image</h1>
             <form action="{{ url_for('upload') }}" method="POST" enctype="multipart/form-data" id="upload-form">
+                <div class="form-group">
+                    <label for="patient_name">Patient Name</label>
+                    <input type="text" name="patient_name" id="patient_name" required>
+                </div>
+                <div class="form-group">
+                    <label for="patient_age">Age</label>
+                    <input type="number" name="patient_age" id="patient_age" required min="0">
+                </div>
+                <div class="form-group">
+                    <label for="patient_gender">Gender</label>
+                    <select name="patient_gender" id="patient_gender" required>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
                 <div class="upload-area" id="upload-area">
                     <div class="upload-icon">📤</div>
                     <p class="upload-text" id="upload-text-1">Drag and drop your ECG image here</p>
@@ -280,83 +338,90 @@
 
     <script>
         const fileInput = document.getElementById('file-input');
-const fileName = document.getElementById('file-name');
-const uploadArea = document.getElementById('upload-area');
-const uploadText1 = document.getElementById('upload-text-1');
-const uploadText2 = document.getElementById('upload-text-2');
-const particlesContainer = document.querySelector('.particles');
+        const fileName = document.getElementById('file-name');
+        const uploadArea = document.getElementById('upload-area');
+        const uploadText1 = document.getElementById('upload-text-1');
+        const uploadText2 = document.getElementById('upload-text-2');
+        const particlesContainer = document.querySelector('.particles');
 
-const primaryBlue = getComputedStyle(document.documentElement).getPropertyValue('--primary-blue');
-const secondaryBlue = getComputedStyle(document.documentElement).getPropertyValue('--secondary-blue');
+        const primaryBlue = getComputedStyle(document.documentElement).getPropertyValue('--primary-blue');
+        const secondaryBlue = getComputedStyle(document.documentElement).getPropertyValue('--secondary-blue');
 
-function updateUploadArea(selected) {
-    if (selected) {
-        uploadText1.textContent = "Image uploaded";
-        uploadText1.style.fontStyle = 'italic';
-        uploadText2.style.display = 'none';
-        fileName.style.display = 'block';
-        fileName.style.color = '#000'; // Ensure it's black
-    } else {
-        uploadText1.textContent = "Drag and drop your ECG image here";
-        uploadText1.style.fontStyle = 'normal';
-        uploadText2.style.display = 'block';
-        fileName.style.display = 'none';
-    }
-}
+        function updateUploadArea(selected) {
+            if (selected) {
+                uploadText1.textContent = "Image uploaded";
+                uploadText1.style.fontStyle = 'italic';
+                uploadText2.style.display = 'none';
+                fileName.style.display = 'block';
+                fileName.style.color = '#000'; // Ensure it's black
+            } else {
+                uploadText1.textContent = "Drag and drop your ECG image here";
+                uploadText1.style.fontStyle = 'normal';
+                uploadText2.style.display = 'block';
+                fileName.style.display = 'none';
+            }
+        }
 
-fileInput.addEventListener('change', function (e) {
-    if (this.files && this.files[0]) {
-        fileName.textContent = `Selected: ${this.files[0].name}`;
-        updateUploadArea(true);
-        uploadArea.style.borderColor = secondaryBlue;
-    }
-});
+        fileInput.addEventListener('change', function (e) {
+            if (this.files && this.files[0]) {
+                fileName.textContent = `Selected: ${this.files[0].name}`;
+                updateUploadArea(true);
+                uploadArea.style.borderColor = secondaryBlue;
+            }
+        });
 
-['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-    uploadArea.addEventListener(eventName, preventDefaults, false);
-});
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, preventDefaults, false);
+        });
 
-function preventDefaults(e) {
-    e.preventDefault();
-    e.stopPropagation();
-}
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
 
-['dragenter', 'dragover'].forEach(eventName => {
-    uploadArea.addEventListener(eventName, highlight, false);
-});
+        ['dragenter', 'dragover'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, highlight, false);
+        });
 
-['dragleave', 'drop'].forEach(eventName => {
-    uploadArea.addEventListener(eventName, unhighlight, false);
-});
+        ['dragleave', 'drop'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, unhighlight, false);
+        });
 
-function highlight(e) {
-    uploadArea.style.borderColor = secondaryBlue;
-    uploadArea.style.background = 'rgba(74, 123, 184, 0.1)';
-}
+        function highlight(e) {
+            uploadArea.style.borderColor = secondaryBlue;
+            uploadArea.style.background = 'rgba(74, 123, 184, 0.1)';
+        }
 
-function unhighlight(e) {
-    uploadArea.style.borderColor = primaryBlue;
-    uploadArea.style.background = 'var(--light-gray)';
-}
+        function unhighlight(e) {
+            uploadArea.style.borderColor = primaryBlue;
+            uploadArea.style.background = 'var(--light-gray)';
+        }
 
-uploadArea.addEventListener('drop', handleDrop, false);
+        uploadArea.addEventListener('drop', handleDrop, false);
 
-function handleDrop(e) {
-    const dt = e.dataTransfer;
-    const files = dt.files;
-    fileInput.files = files;
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            fileInput.files = files;
 
-    if (files && files[0]) {
-        fileName.textContent = `Selected: ${files[0].name}`;
-        updateUploadArea(true);
-    }
-}
+            if (files && files[0]) {
+                fileName.textContent = `Selected: ${files[0].name}`;
+                updateUploadArea(true);
+            }
+        }
 
-// Initialize upload area state
-updateUploadArea(false);
-
-        // Particle effect
-       
+        // Particle effect (unchanged, but ensuring it runs)
+        for (let i = 0; i < 20; i++) {
+            const particle = document.createElement('div');
+            particle.classList.add('particle');
+            particle.style.width = `${Math.random() * 8 + 4}px`;
+            particle.style.height = particle.style.width;
+            particle.style.left = `${Math.random() * 100}%`;
+            particle.style.top = `${Math.random() * 100}%`;
+            particle.style.animationDuration = `${Math.random() * 10 + 5}s`;
+            particle.style.animationDelay = `${Math.random() * 5}s`;
+            particlesContainer.appendChild(particle);
+        }
 
         window.addEventListener('scroll', () => {
             const navbar = document.querySelector('.navbar');
